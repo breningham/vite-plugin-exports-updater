@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
+      - run: volta install
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Run Lint

@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-exports-updater",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A Vite plugin that automatically updates your package.json exports map after a build.",
   "license": "MIT",
   "author": "Brendan Ingham <brendan@ingham.dev>",
@@ -34,12 +34,11 @@
   },
   "devDependencies": {
     "@types/node": "24.2.1",
-    "@typescript-eslint/eslint-plugin": "^8.39.1",
-    "@typescript-eslint/parser": "^8.39.1",
+    "@typescript-eslint/eslint-plugin": "8.39.1",
+    "@typescript-eslint/parser": "8.39.1",
     "eslint": "9.33.0",
     "globals": "16.3.0",
-    "jiti": "^2.5.1",
-    "typescript": "5.9.2",
+    "typescript": "5.8.3",
     "typescript-eslint": "8.39.1",
     "vite": "7.1.2",
     "vitest": "^3.2.4"

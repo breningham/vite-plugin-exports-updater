@@ -59,7 +59,7 @@ function collectEntriesFromDist(distPath: string): string[] {
   return entryNames;
 }
 
-export function buildExportsMap(entryNames: string[], distPath: string, pkg: PackageJson): Record<string, ExportCondition | string> {
+export function buildExportsMap(entryNames: string[], distPath: string, pkg: PackageJson, options: PluginOptions): Record<string, ExportCondition | string> {
   const exportsMap: Record<string, ExportCondition | string> = {};
 
   // 1. Handle JS/TS entries
@@ -90,27 +90,42 @@ export function buildExportsMap(entryNames: string[], distPath: string, pkg: Pac
   }
 
   // 2. Handle CSS entries
-  const cssFiles = fs.readdirSync(distPath).filter((f) => f.endsWith(".css"));
-  const pkgNameCss = `${path.basename(pkg.name)}.css`;
+  if (options.css?.enabled !== false) {
+    const cssFiles = fs.readdirSync(distPath).filter((f) => f.endsWith(".css"));
+    const pkgNameCss = `${path.basename(pkg.name)}.css`;
 
-  if (cssFiles.includes("style.css")) {
-    exportsMap["./style.css"] = "./dist/style.css";
-  } else if (cssFiles.includes(pkgNameCss)) {
-    exportsMap["./style.css"] = `./dist/${pkgNameCss}`;
-  } else if (cssFiles.includes("index.css")) {
-    exportsMap["./style.css"] = "./dist/index.css";
-  }
+    // Only generate alias if options.css.alias is not explicitly false
+    if (options.css?.alias !== false) {
+      const alias = options.css?.alias || './style.css'; // Use provided alias or default
 
-  for (const file of cssFiles) {
-    exportsMap[`./${file}`] = `./dist/${file}`;
+      if (cssFiles.includes("style.css")) {
+        exportsMap[alias] = "./dist/style.css";
+      } else if (cssFiles.includes(pkgNameCss)) {
+        exportsMap[alias] = `./dist/${pkgNameCss}`;
+      } else if (cssFiles.includes("index.css")) {
+        exportsMap[alias] = "./dist/index.css";
+      }
+    }
+
+    // Always add individual CSS files
+    for (const file of cssFiles) {
+      exportsMap[`./${file}`] = `./dist/${file}`;
+    }
   }
 
   return exportsMap;
 }
 
+interface PluginOptions {
+  css?: {
+    alias?: string | false;
+    enabled?: boolean;
+  };
+}
+
 // --- The Vite Plugin ---
 
-export default function updateExports(): Plugin {
+export default function updateExports(options: PluginOptions = {}): Plugin {
   return {
     name: "vite-plugin-exports-updater",
 
@@ -167,12 +182,15 @@ export default function updateExports(): Plugin {
           return;
         }
 
-        pkg.exports = buildExportsMap(entryNames, distPath, pkg);
+        pkg.exports = buildExportsMap(entryNames, distPath, pkg, options);
 
         if (pkg.exports["."]) {
-          pkg.main = pkg.exports["."].require || pkg.main;
-          pkg.module = pkg.exports["."].import || pkg.module;
-          pkg.types = pkg.exports["."].types || pkg.types;
+          const mainExport = pkg.exports["."];
+          if(typeof mainExport !== 'string') {
+            pkg.main = mainExport.require || pkg.main;
+            pkg.module = mainExport.import || pkg.module;
+            pkg.types = mainExport.types || pkg.types;
+          }
         }
 
         // Ensure legacy fields are removed if they are null/undefined from the exports map
@@ -190,3 +208,4 @@ export default function updateExports(): Plugin {
     },
   };
 }
+

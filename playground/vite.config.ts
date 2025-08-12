@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [updateExports()],
+  plugins: [updateExports({ css: { alias: false } })],
   build: {
     lib: {
       entry: {

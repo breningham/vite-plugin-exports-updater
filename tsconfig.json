@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    /* --- Target & Module System --- */
+    "target": "esnext", // Output modern, widely compatible JavaScript.
+    "module": "NodeNext", // Use the modern Node.js module system (ESM).
+    "moduleResolution": "NodeNext", // Required by "module": "NodeNext".
+
+    /* --- Strictness & Code Quality --- */
+    "strict": true, // Enable all strict type-checking options.
+    "skipLibCheck": true, // Don't type-check declaration files from dependencies.
+    "noUnusedLocals": true, // Report errors on unused local variables.
+    "noUnusedParameters": true, // Report errors on unused parameters.
+    "noFallthroughCasesInSwitch": true,
+
+    /* --- Output & Declaration Files --- */
+    "declaration": true, // Generate .d.ts files for consumers.
+    "declarationMap": true, // Create source maps for .d.ts files.
+    "sourceMap": true, // Create source maps for .js files for easier debugging.
+    "outDir": "./dist", // Place all output files in the 'dist' directory.
+    "removeComments": false, // Keep comments in the output for clarity if needed.
+
+    /* --- Interoperability --- */
+    "esModuleInterop": true, // Improve compatibility with CommonJS modules.
+    "forceConsistentCasingInFileNames": true, // Prevent issues on case-sensitive file systems.
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  // Define what to compile and what to ignore.
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "playground"]
+}

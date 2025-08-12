@@ -1,0 +1,43 @@
+{
+  "name": "vite-plugin-exports-updater",
+  "version": "1.0.0",
+  "description": "A Vite plugin that automatically updates your package.json exports map after a build.",
+  "license": "MIT",
+  "author": "Brendan Ingham <brendan@ingham.dev>",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "rm -rf dist && tsc",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "vite",
+    "vite-plugin",
+    "exports",
+    "package.json"
+  ],
+  "peerDependencies": {
+    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.2.1",
+    "typescript": "5.9.2",
+    "vite": "7.1.2"
+  },
+  "packageManager": "pnpm@10.12.4",
+  "volta": {
+    "node": "24.5.0",
+    "pnpm": "10.14.0"
+  }
+}

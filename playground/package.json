@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "typescript": "~5.8.3",
-    "vite": "^7.1.2",
+    "typescript": "5.8.3",
+    "vite": "7.1.2",
     "vite-plugin-exports-updater": "workspace:*"
   },
   "exports": {
@@ -25,7 +25,9 @@
     "./another-entry-point": {
       "import": "./dist/another-entry-point.js",
       "require": "./dist/another-entry-point.cjs"
-    }
+    },
+    "./style.css": "./dist/playground.css",
+    "./playground.css": "./dist/playground.css"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js"

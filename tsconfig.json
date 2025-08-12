@@ -27,5 +27,5 @@
   },
   // Define what to compile and what to ignore.
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "playground"]
+  "exclude": ["node_modules", "dist", "playground", "**/*.test.ts", "vitest.config.ts", "eslint.config.ts"]
 }

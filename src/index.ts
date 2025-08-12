@@ -2,9 +2,23 @@ import { type Plugin, loadConfigFromFile } from "vite";
 import fs from "node:fs";
 import path from "node:path";
 
+interface PackageJson {
+  name: string;
+  main?: string;
+  module?: string;
+  types?: string;
+  exports?: Record<string, ExportCondition | string>;
+}
+
+type ExportCondition = {
+  import?: string;
+  require?: string;
+  types?: string;
+};
+
 // --- Helper Functions (from your original script) ---
 
-async function findPackageDir(): Promise<string> {
+export async function findPackageDir(): Promise<string> {
   let dir = process.cwd();
   while (true) {
     if (fs.existsSync(path.join(dir, "package.json"))) {
@@ -17,7 +31,7 @@ async function findPackageDir(): Promise<string> {
   throw new Error("Could not find package.json");
 }
 
-async function tryLoadViteConfig(pkgDir: string) {
+export async function tryLoadViteConfig(pkgDir: string) {
   try {
     const loaded = await loadConfigFromFile(
       { command: 'build', mode: 'production' },
@@ -25,10 +39,10 @@ async function tryLoadViteConfig(pkgDir: string) {
       pkgDir,
     );
     return loaded?.config
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Vite will log its own error, so we can just warn here.
     console.warn(
-      `[exports-updater] Failed to load vite config: ${err.message}`
+      `[exports-updater] Failed to load vite config: ${err instanceof Error ? err.message : String(err)}`
     );
     return null;
   }
@@ -45,8 +59,8 @@ function collectEntriesFromDist(distPath: string): string[] {
   return entryNames;
 }
 
-function buildExportsMap(entryNames: string[], distPath: string, pkg: any) {
-  const exportsMap: Record<string, any> = {};
+export function buildExportsMap(entryNames: string[], distPath: string, pkg: PackageJson): Record<string, ExportCondition | string> {
+  const exportsMap: Record<string, ExportCondition | string> = {};
 
   // 1. Handle JS/TS entries
   for (const name of entryNames) {
@@ -170,8 +184,8 @@ export default function updateExports(): Plugin {
         console.log(
           `✅ [exports-updater] Successfully updated exports for ${pkg.name}.`
         );
-      } catch (error: any) {
-        console.error(`[exports-updater] An error occurred: ${error.message}`);
+      } catch (error: unknown) {
+        console.error(`[exports-updater] An error occurred: ${error instanceof Error ? error.message : String(error)}`);
       }
     },
   };

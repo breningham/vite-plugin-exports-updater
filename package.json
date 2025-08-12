@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-exports-updater",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Vite plugin that automatically updates your package.json exports map after a build.",
   "license": "MIT",
   "author": "Brendan Ingham <brendan@ingham.dev>",

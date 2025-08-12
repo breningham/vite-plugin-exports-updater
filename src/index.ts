@@ -1,7 +1,6 @@
-import type { Plugin } from "vite";
+import { type Plugin, loadConfigFromFile } from "vite";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 
 // --- Helper Functions (from your original script) ---
 
@@ -18,36 +17,18 @@ async function findPackageDir(): Promise<string> {
   throw new Error("Could not find package.json");
 }
 
-async function maybeInvokeConfig(fn: any) {
-  try {
-    const result = fn({ command: "build", mode: "production" });
-    return result && typeof result.then === "function" ? await result : result;
-  } catch {
-    return null;
-  }
-}
-
 async function tryLoadViteConfig(pkgDir: string) {
-  const possibleFiles = [
-    "vite.config.ts",
-    "vite.config.mjs",
-    "vite.config.js",
-    "vite.config.cjs",
-  ];
-  const cfgPath = possibleFiles
-    .map((f) => path.join(pkgDir, f))
-    .find((p) => fs.existsSync(p));
-  if (!cfgPath) return null;
-
   try {
-    const mod = await import(pathToFileURL(cfgPath).href);
-    const config = mod.default || mod;
-    return typeof config === "function"
-      ? await maybeInvokeConfig(config)
-      : config;
+    const loaded = await loadConfigFromFile(
+      { command: 'build', mode: 'production' },
+      undefined,
+      pkgDir,
+    );
+    return loaded?.config
   } catch (err: any) {
+    // Vite will log its own error, so we can just warn here.
     console.warn(
-      `[exports-updater] Failed to load vite config from ${cfgPath}: ${err.message}`
+      `[exports-updater] Failed to load vite config: ${err.message}`
     );
     return null;
   }
@@ -141,19 +122,22 @@ export default function updateExports(): Plugin {
         const viteConfig = await tryLoadViteConfig(pkgDir);
 
         let entryNames: string[] = [];
-        const entryOption = viteConfig?.build?.lib?.entry;
 
-        if (entryOption) {
-          if (typeof entryOption === "string") {
-            entryNames.push(
-              path.basename(entryOption, path.extname(entryOption))
-            );
-          } else if (Array.isArray(entryOption)) {
-            entryNames.push(
-              ...entryOption.map((e) => path.basename(e, path.extname(e)))
-            );
-          } else if (typeof entryOption === "object") {
-            entryNames.push(...Object.keys(entryOption));
+        if (viteConfig?.build?.lib) {
+          const entryOption = viteConfig?.build?.lib?.entry;
+
+          if (entryOption) {
+            if (typeof entryOption === "string") {
+              entryNames.push(
+                path.basename(entryOption, path.extname(entryOption))
+              );
+            } else if (Array.isArray(entryOption)) {
+              entryNames.push(
+                ...entryOption.map((e) => path.basename(e, path.extname(e)))
+              );
+            } else if (typeof entryOption === "object") {
+              entryNames.push(...Object.keys(entryOption));
+            }
           }
         }
 

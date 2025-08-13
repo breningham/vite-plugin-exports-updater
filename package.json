@@ -22,7 +22,8 @@
     "build": "rm -rf dist && tsc",
     "lint": "eslint .",
     "test": "vitest",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "release": "semantic-release"
   },
   "keywords": [
     "vite",
@@ -34,11 +35,15 @@
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.4",
     "@types/node": "24.2.1",
     "@typescript-eslint/eslint-plugin": "8.39.1",
     "@typescript-eslint/parser": "8.39.1",
     "eslint": "9.33.0",
     "globals": "16.3.0",
+    "semantic-release": "^24.2.7",
     "typescript": "5.8.3",
     "typescript-eslint": "8.39.1",
     "vite": "7.1.2",

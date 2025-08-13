@@ -34,32 +34,47 @@ export async function findPackageDir(): Promise<string> {
 export async function tryLoadViteConfig(pkgDir: string) {
   try {
     const loaded = await loadConfigFromFile(
-      { command: 'build', mode: 'production' },
+      { command: "build", mode: "production" },
       undefined,
-      pkgDir,
+      pkgDir
     );
-    return loaded?.config
+    return loaded?.config;
   } catch (err: unknown) {
     // Vite will log its own error, so we can just warn here.
     console.warn(
-      `[exports-updater] Failed to load vite config: ${err instanceof Error ? err.message : String(err)}`
+      `[exports-updater] Failed to load vite config: ${
+        err instanceof Error ? err.message : String(err)
+      }`
     );
     return null;
   }
 }
 
-function collectEntriesFromDist(distPath: string): string[] {
+export function collectEntriesFromDist(
+  distPath: string,
+  options: PluginOptions
+): string[] {
   if (!fs.existsSync(distPath)) return [];
-  const files = fs
-    .readdirSync(distPath)
-    .filter((f) => /\.(js|cjs|mjs|d\.ts)$/.test(f));
-  const entryNames = [
-    ...new Set(files.map((f) => f.replace(/\.(js|cjs|mjs|d\.ts)$/, ""))),
+  const entryPointExtensions = options.entryPointExtensions || [
+    ".js",
+    ".cjs",
+    ".mjs",
+    ".d.ts",
   ];
+  const regex = new RegExp(
+    `\.(${entryPointExtensions.map((ext) => ext.slice(1)).join("|")})`
+  );
+  const files = fs.readdirSync(distPath).filter((f) => regex.test(f));
+  const entryNames = [...new Set(files.map((f) => f.replace(regex, "")))];
   return entryNames;
 }
 
-export function buildExportsMap(entryNames: string[], distPath: string, pkg: PackageJson, options: PluginOptions): Record<string, ExportCondition | string> {
+export function buildExportsMap(
+  entryNames: string[],
+  distPath: string,
+  pkg: PackageJson,
+  options: PluginOptions
+): Record<string, ExportCondition | string> {
   const exportsMap: Record<string, ExportCondition | string> = {};
 
   // 1. Handle JS/TS entries
@@ -91,12 +106,15 @@ export function buildExportsMap(entryNames: string[], distPath: string, pkg: Pac
 
   // 2. Handle CSS entries
   if (options.css !== false) {
-    const cssFiles = fs.readdirSync(distPath).filter((f) => f.endsWith(".css"));
+    const cssExtensions = options.css?.extensions || [".css"];
+    const cssFiles = fs
+      .readdirSync(distPath)
+      .filter((f) => cssExtensions.some((ext) => f.endsWith(ext)));
     const pkgNameCss = `${path.basename(pkg.name)}.css`;
 
     // Only generate alias if options.css.alias is not explicitly false
     if (options.css?.alias !== false) {
-      const alias = options.css?.alias || './style.css'; // Use provided alias or default
+      const alias = options.css?.alias || "./style.css"; // Use provided alias or default
 
       if (cssFiles.includes("style.css")) {
         exportsMap[alias] = "./dist/style.css";
@@ -117,9 +135,13 @@ export function buildExportsMap(entryNames: string[], distPath: string, pkg: Pac
 }
 
 interface PluginOptions {
-  css?: false | {
-    alias?: string | false;
-  };
+  entryPointExtensions?: string[];
+  css?:
+    | false
+    | {
+        alias?: string | false;
+        extensions?: string[];
+      };
 }
 
 // --- The Vite Plugin ---
@@ -173,7 +195,7 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
           console.log(
             "[exports-updater] No lib.entry found in Vite config, falling back to scanning dist/ directory."
           );
-          entryNames = collectEntriesFromDist(distPath);
+          entryNames = collectEntriesFromDist(distPath, options);
         }
 
         if (entryNames.length === 0) {
@@ -185,7 +207,7 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
 
         if (pkg.exports["."]) {
           const mainExport = pkg.exports["."];
-          if(typeof mainExport !== 'string') {
+          if (typeof mainExport !== "string") {
             pkg.main = mainExport.require || pkg.main;
             pkg.module = mainExport.import || pkg.module;
             pkg.types = mainExport.types || pkg.types;
@@ -202,7 +224,11 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
           `✅ [exports-updater] Successfully updated exports for ${pkg.name}.`
         );
       } catch (error: unknown) {
-        console.error(`[exports-updater] An error occurred: ${error instanceof Error ? error.message : String(error)}`);
+        console.error(
+          `[exports-updater] An error occurred: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
       }
     },
   };

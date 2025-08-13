@@ -1,7 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildExportsMap } from './index';
+import { buildExportsMap, collectEntriesFromDist } from './index';
 import path from 'node:path';
 import fs from 'node:fs';
+
+describe('collectEntriesFromDist', () => {
+  const distPath = '/path/to/dist';
+
+  beforeEach(() => {
+    vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
+  });
+
+  it('should handle custom entry point extensions', () => {
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+    vi.spyOn(fs, 'readdirSync').mockReturnValue(['component.vue', 'index.js'] as any);
+
+    const entryNames = collectEntriesFromDist(distPath, { entryPointExtensions: ['.vue'] });
+
+    expect(entryNames).toEqual(['component']);
+  });
+});
 
 describe('buildExportsMap', () => {
   const distPath = '/path/to/dist';
@@ -131,6 +148,24 @@ describe('buildExportsMap', () => {
       },
       './my-styles.css': './dist/style.css',
       './style.css': './dist/style.css',
+    });
+  });
+
+  it('should handle custom CSS extensions', () => {
+    const entryNames = ['index'];
+    vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
+    vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
+      return p === '/path/to/dist/index.js';
+    });
+    vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.scss'] as any);
+
+    const exportsMap = buildExportsMap(entryNames, distPath, pkg, { css: { extensions: ['.scss'] } });
+
+    expect(exportsMap).toEqual({
+      '.': {
+        import: './dist/index.js',
+      },
+      './style.scss': './dist/style.scss',
     });
   });
 

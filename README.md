@@ -13,13 +13,11 @@ pnpm add -D vite-plugin-exports-updater
 Add the plugin to your `vite.config.ts`:
 
 ```typescript
-import { defineConfig } from 'vite';
-import exportsUpdater from 'vite-plugin-exports-updater';
+import { defineConfig } from "vite";
+import exportsUpdater from "vite-plugin-exports-updater";
 
 export default defineConfig({
-  plugins: [
-    exportsUpdater(),
-  ],
+  plugins: [exportsUpdater()],
 });
 ```
 
@@ -30,15 +28,18 @@ Now, when you run `vite build`, the plugin will automatically update the `export
 You can pass an options object to the `exportsUpdater` plugin to customize its behavior.
 
 ```typescript
-import { defineConfig } from 'vite';
-import exportsUpdater from 'vite-plugin-exports-updater';
+import { defineConfig } from "vite";
+import exportsUpdater from "vite-plugin-exports-updater";
 
 export default defineConfig({
   plugins: [
     exportsUpdater({
+      // To disable CSS handling completely
+      // css: false,
+
+      // To customize CSS handling
       css: {
-        enabled: true, // default: true - Whether to process CSS files and add them to exports.
-        alias: './style.css', // default: './style.css' - The alias for the main CSS file. Set to `false` to disable the alias.
+        alias: "./style.css", // default: './style.css' - The alias for the main CSS file. Set to `false` to disable the alias.
       },
     }),
   ],
@@ -47,9 +48,10 @@ export default defineConfig({
 
 ### CSS Options
 
--   `css.enabled`: `boolean` (default: `true`)
-    -   Set to `false` to completely disable the plugin's handling of CSS files. No CSS files will be added to the `exports` map.
--   `css.alias`: `string | false` (default: `'./style.css'`)
-    -   Specifies the alias for the main CSS entry point.
-    -   If a `string` is provided (e.g., `'./my-styles.css'`), the plugin will use that string as the alias (e.g., `exports['./my-styles.css']`).
-    -   If set to `false`, the plugin will *not* generate an alias for the main CSS file (e.g., `exports['./style.css']` will not be present), but individual CSS files (e.g., `exports['./dist/style.css']`) will still be added if they exist.
+- `css`: `false | { alias?: string | false }` (default: `{ alias: './style.css' }`)
+  - To disable CSS handling entirely, set this option to `false`.
+  - To configure CSS handling, provide an object.
+- `css.alias`: `string | false` (default: `'./style.css'`)
+  - Specifies the alias for the main CSS entry point.
+  - If a `string` is provided (e.g., `'./my-styles.css'`), the plugin will use that string as the alias (e.g., `exports['./my-styles.css']`).
+  - If set to `false`, the plugin will _not_ generate an alias for the main CSS file (e.g., `exports['./style.css']` will not be present), but individual CSS files (e.g., `exports['./dist/style.css']`) will still be added if they exist.

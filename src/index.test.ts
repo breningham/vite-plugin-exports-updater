@@ -106,7 +106,7 @@ describe('buildExportsMap', () => {
     });
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.css'] as any);
 
-    const exportsMap = buildExportsMap(entryNames, distPath, pkg, { css: { enabled: false } });
+    const exportsMap = buildExportsMap(entryNames, distPath, pkg, { css: false });
 
     expect(exportsMap).toEqual({
       '.': {

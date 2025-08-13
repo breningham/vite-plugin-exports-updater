@@ -90,7 +90,7 @@ export function buildExportsMap(entryNames: string[], distPath: string, pkg: Pac
   }
 
   // 2. Handle CSS entries
-  if (options.css?.enabled !== false) {
+  if (options.css !== false) {
     const cssFiles = fs.readdirSync(distPath).filter((f) => f.endsWith(".css"));
     const pkgNameCss = `${path.basename(pkg.name)}.css`;
 
@@ -117,9 +117,8 @@ export function buildExportsMap(entryNames: string[], distPath: string, pkg: Pac
 }
 
 interface PluginOptions {
-  css?: {
+  css?: false | {
     alias?: string | false;
-    enabled?: boolean;
   };
 }
 

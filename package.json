@@ -4,6 +4,9 @@
   "description": "A Vite plugin that automatically updates your package.json exports map after a build.",
   "license": "MIT",
   "author": "Brendan Ingham <brendan@ingham.dev>",
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": "https://github.com/breningham/vite-plugin-exports-updater",
   "type": "module",
   "files": [

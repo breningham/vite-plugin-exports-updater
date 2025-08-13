@@ -1,3 +1,20 @@
+# [2.0.0](https://github.com/breningham/vite-plugin-exports-updater/compare/v1.2.0...v2.0.0) (2025-08-13)
+
+
+### Code Refactoring
+
+* simplify CSS handling in buildExportsMap ([5bb1fdb](https://github.com/breningham/vite-plugin-exports-updater/commit/5bb1fdb345cbf9171bf857e878562b161644ac83))
+
+
+### Features
+
+* enhance entry point and CSS handling in exports updater ([a4d7f78](https://github.com/breningham/vite-plugin-exports-updater/commit/a4d7f788f8cd69c34e8731297e7cd22291716316))
+
+
+### BREAKING CHANGES
+
+* this commit removes the `css.enabled` option, if you want to disable handling css files, set the css option to `false`
+
 # 1.0.0 (2025-08-13)
 
 

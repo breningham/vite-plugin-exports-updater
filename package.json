@@ -52,7 +52,7 @@
     "vite": "7.1.2",
     "vitest": "^3.2.4"
   },
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.14.0",
   "volta": {
     "node": "24.5.0",
     "pnpm": "10.14.0"

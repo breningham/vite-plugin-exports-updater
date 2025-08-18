@@ -62,7 +62,7 @@ export function collectEntriesFromDist(
     ".d.ts",
   ];
   const regex = new RegExp(
-    `\.(${entryPointExtensions.map((ext) => ext.slice(1)).join("|")})`
+    `\\.(${entryPointExtensions.map((ext) => ext.slice(1)).join("|")})`
   );
   const files = fs.readdirSync(distPath).filter((f) => regex.test(f));
   const entryNames = [...new Set(files.map((f) => f.replace(regex, "")))];

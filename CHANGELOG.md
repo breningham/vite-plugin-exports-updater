@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.0...v2.0.1) (2025-08-18)
+
+
+### Bug Fixes
+
+* **CodeQL:** Potential fix for code scanning alert no. 2 ([#2](https://github.com/breningham/vite-plugin-exports-updater/issues/2)) ([5d1cd98](https://github.com/breningham/vite-plugin-exports-updater/commit/5d1cd982b2f8c83e1b090f6d26d2839616b82481))
+
 # [2.0.0](https://github.com/breningham/vite-plugin-exports-updater/compare/v1.2.0...v2.0.0) (2025-08-13)
 
 

@@ -25,6 +25,7 @@ describe("vite-plugin-exports-updater", () => {
       "index.js",
       "index.d.ts",
     ] as any);
+    vi.spyOn(fs, "statSync").mockReturnValue({ isDirectory: () => false } as any);
 
     if (typeof closeBundle === "function") {
       await closeBundle.call(undefined);

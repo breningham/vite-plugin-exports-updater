@@ -26,7 +26,6 @@
       "import": "./dist/another-entry-point.js",
       "require": "./dist/another-entry-point.cjs"
     },
-    "./style.css": "./dist/playground.css",
     "./playground.css": "./dist/playground.css"
   },
   "main": "./dist/index.cjs",

@@ -107,10 +107,24 @@ export function buildExportsMap(
   // 2. Handle CSS entries
   if (options.css !== false) {
     const cssExtensions = options.css?.extensions || [".css"];
-    const cssFiles = fs
-      .readdirSync(distPath)
-      .filter((f) => cssExtensions.some((ext) => f.endsWith(ext)));
     const pkgNameCss = `${path.basename(pkg.name)}.css`;
+
+    const findCssFiles = (dir: string): string[] => {
+      const files = fs.readdirSync(dir);
+      let cssFiles: string[] = [];
+      for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+          cssFiles = cssFiles.concat(findCssFiles(filePath));
+        } else if (cssExtensions.some((ext) => file.endsWith(ext))) {
+          cssFiles.push(path.relative(distPath, filePath));
+        }
+      }
+      return cssFiles;
+    };
+
+    const cssFiles = findCssFiles(distPath);
 
     // Only generate alias if options.css.alias is not explicitly false
     if (options.css?.alias !== false) {
@@ -127,7 +141,15 @@ export function buildExportsMap(
 
     // Always add individual CSS files
     for (const file of cssFiles) {
-      exportsMap[`./${file}`] = `./dist/${file}`;
+      const key = `./${file.replace(/\\/g, "/")}`;
+      const value = `./dist/${file.replace(/\\/g, "/")}`;
+      if (file.endsWith(".scss")) {
+        exportsMap[key] = {
+          sass: value,
+        };
+      } else {
+        exportsMap[key] = value;
+      }
     }
   }
 

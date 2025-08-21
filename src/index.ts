@@ -256,5 +256,3 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
     },
   };
 }
-
-// Test change

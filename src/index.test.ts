@@ -8,6 +8,7 @@ describe('collectEntriesFromDist', () => {
 
   beforeEach(() => {
     vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
+    vi.spyOn(fs, 'statSync').mockReturnValue({ isDirectory: () => false } as any);
   });
 
   it('should handle custom entry point extensions', () => {
@@ -26,6 +27,7 @@ describe('buildExportsMap', () => {
 
   beforeEach(() => {
     vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
+    vi.spyOn(fs, 'statSync').mockReturnValue({ isDirectory: () => false } as any);
   });
 
   it('should handle a single entry point', () => {
@@ -165,7 +167,9 @@ describe('buildExportsMap', () => {
       '.': {
         import: './dist/index.js',
       },
-      './style.scss': './dist/style.scss',
+      './style.scss': {
+        sass: './dist/style.scss',
+      },
     });
   });
 
@@ -184,6 +188,62 @@ describe('buildExportsMap', () => {
         import: './dist/index.js',
       },
       './style.css': './dist/style.css',
+    });
+  });
+
+  it('should handle SCSS files with sass condition', () => {
+    const entryNames = ['index'];
+    vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
+    vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
+      return p === '/path/to/dist/index.js';
+    });
+    vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.scss'] as any);
+    vi.spyOn(fs, 'statSync').mockReturnValue({ isDirectory: () => false } as any);
+
+    const exportsMap = buildExportsMap(entryNames, distPath, pkg, { css: { extensions: ['.scss'] } });
+
+    expect(exportsMap).toEqual({
+      '.': {
+        import: './dist/index.js',
+      },
+      './style.scss': {
+        sass: './dist/style.scss',
+      },
+    });
+  });
+
+  it('should find CSS files in subdirectories', () => {
+    const entryNames = ['index'];
+    vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
+    vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
+      return p === '/path/to/dist/index.js';
+    });
+    // Mock readdirSync to return a directory and a file
+    vi.spyOn(fs, 'readdirSync').mockImplementation((p) => {
+      if (p === distPath) {
+        return ['styles', 'toplevel.css'] as any;
+      }
+      if (p === path.join(distPath, 'styles')) {
+        return ['nested.css'] as any;
+      }
+      return [] as any;
+    });
+    // Mock statSync to identify directories and files
+    vi.spyOn(fs, 'statSync').mockImplementation((p) => {
+      if (p === path.join(distPath, 'styles')) {
+        return { isDirectory: () => true } as any;
+      }
+      return { isDirectory: () => false } as any;
+    });
+
+    const exportsMap = buildExportsMap(entryNames, distPath, pkg, { css: { extensions: ['.css'] } });
+
+    expect(exportsMap).toEqual({
+      '.': {
+        import: './dist/index.js',
+      },
+      './toplevel.css': './dist/toplevel.css',
+      './styles/nested.css': './dist/styles/nested.css',
     });
   });
 });

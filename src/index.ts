@@ -10,14 +10,13 @@ interface PackageJson {
   exports?: Record<string, ExportCondition>;
 }
 
-type ExportCondition =
-  | string
-  | {
-      import?: string;
-      require?: string;
-      types?: string;
-    }
-  | { sass: string };
+type ExportCondition = {
+  import?: string;
+  require?: string;
+  types?: string;
+  sass?: string;
+  style?: string;
+};
 
 // --- Helper Functions (from your original script) ---
 

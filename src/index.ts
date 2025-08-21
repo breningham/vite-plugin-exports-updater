@@ -7,15 +7,17 @@ interface PackageJson {
   main?: string;
   module?: string;
   types?: string;
-  exports?: Record<string, ExportCondition | string>;
+  exports?: Record<string, ExportCondition>;
 }
 
-type ExportCondition = {
-  import?: string;
-  require?: string;
-  types?: string;
-  sass?: string;
-};
+type ExportCondition =
+  | string
+  | {
+      import?: string;
+      require?: string;
+      types?: string;
+    }
+  | { sass: string };
 
 // --- Helper Functions (from your original script) ---
 

@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.1...v2.0.2) (2025-08-21)
+
+
+### Bug Fixes
+
+* **scss:** correctly export the scss files using the sass key in the package.json ([#12](https://github.com/breningham/vite-plugin-exports-updater/issues/12)) ([dcb1bfd](https://github.com/breningham/vite-plugin-exports-updater/commit/dcb1bfdacf2c155ab0962a247e73baca340c0b7c))
+
 ## [2.0.1](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.0...v2.0.1) (2025-08-18)
 
 

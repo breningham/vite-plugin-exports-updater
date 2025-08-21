@@ -14,6 +14,7 @@ type ExportCondition = {
   import?: string;
   require?: string;
   types?: string;
+  sass?: string;
 };
 
 // --- Helper Functions (from your original script) ---

@@ -33,6 +33,9 @@ jobs:
     needs: build
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -48,7 +51,8 @@ jobs:
       - name: Generate Release Notes Preview
         id: release_notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           RELEASE_OUTPUT=$(npx semantic-release --dry-run --ci false --debug)
           echo "$RELEASE_OUTPUT"
@@ -62,7 +66,7 @@ jobs:
       - name: Comment on Pull Request
         if: steps.release_notes.outputs.release_notes != ''
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           gh pr comment ${{ github.event.pull_request.number }} 
             --body "## Release Notes Preview\n\n${{ steps.release_notes.outputs.release_notes }}"

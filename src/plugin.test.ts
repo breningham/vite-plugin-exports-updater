@@ -91,6 +91,7 @@ describe("vite-plugin-exports-updater with component exports", () => {
             entry: {
               button: "lib/button/index.ts",
               card: "lib/card/index.ts",
+              "css-module-component": "lib/css-module-component/index.ts",
             },
           },
         },
@@ -107,9 +108,11 @@ describe("vite-plugin-exports-updater with component exports", () => {
 
       // CJS builds exist
       if (
-        ["dist/button.cjs", "dist/card.cjs"].some((file) =>
-          pathStr.endsWith(file)
-        )
+        [
+          "dist/button.cjs",
+          "dist/card.cjs",
+          "dist/css-module-component.cjs",
+        ].some((file) => pathStr.endsWith(file))
       )
         return true;
 
@@ -122,17 +125,29 @@ describe("vite-plugin-exports-updater with component exports", () => {
     // --- Mock Glob ---
     vi.mocked(globSync).mockImplementation((pattern, options) => {
       const cwd = options?.cwd?.toString() || "";
+      const ignorePatterns = options?.ignore || [];
+      let files: string[] = [];
+
       if (cwd.endsWith("lib/button")) {
-        return ["_button.scss"];
+        files = ["_button.scss"];
+      } else if (cwd.endsWith("lib/card")) {
+        files = ["card.css"];
+      } else if (cwd.endsWith("lib/css-module-component")) {
+        files = ["component.module.css"];
       }
-      if (cwd.endsWith("lib/card")) {
-        return ["card.css"];
-      }
-      return [];
+
+      // Filter out ignored files
+      return files.filter(file => {
+        return !ignorePatterns.some(ignorePattern => {
+          // Basic glob matching for testing purposes
+          const regex = new RegExp(ignorePattern.replace(/\./g, "\\.").replace(/\*/g, ".*"));
+          return regex.test(file);
+        });
+      });
     });
   });
 
-  it("should generate exports with types and sass/style conditions", async () => {
+  it("should generate exports with types and sass/style conditions, and direct CSS export", async () => {
     const plugin = updateExports({ handleTypes: true });
     const closeBundle = plugin.closeBundle;
 
@@ -156,6 +171,11 @@ describe("vite-plugin-exports-updater with component exports", () => {
               import: "./dist/card.js",
               require: "./dist/card.cjs",
               style: "lib/card/card.css",
+            },
+            "./card.css": "lib/card/card.css", // New direct CSS export
+            "./css-module-component": {
+              import: "./dist/css-module-component.js",
+              require: "./dist/css-module-component.cjs",
             },
           },
         },
@@ -195,5 +215,28 @@ describe("vite-plugin-exports-updater with component exports", () => {
 
     expect(writtenConfig.exports["./button"]).not.toHaveProperty("sass");
     expect(writtenConfig.exports["./card"]).not.toHaveProperty("style");
+  });
+
+  it("should NOT map CSS module files", async () => {
+    const plugin = updateExports();
+    const closeBundle = plugin.closeBundle;
+
+    if (typeof closeBundle === "function") {
+      await closeBundle.call(undefined);
+    }
+
+    const writtenConfig = JSON.parse(
+      vi.mocked(fs.writeFileSync).mock.calls[0][1] as string
+    );
+
+    expect(writtenConfig.exports["./css-module-component"]).not.toHaveProperty(
+      "style"
+    );
+    expect(writtenConfig.exports["./css-module-component"]).not.toHaveProperty(
+      "sass"
+    );
+    expect(writtenConfig.exports).not.toHaveProperty(
+      "./css-module-component.css"
+    );
   });
 });

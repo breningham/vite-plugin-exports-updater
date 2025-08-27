@@ -29,6 +29,44 @@ jobs:
       - name: Build Project
         run: pnpm build
 
+  pr-report:
+    needs: build
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: "package.json"
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Release Notes Preview
+        id: release_notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_OUTPUT=$(npx semantic-release --dry-run --ci false --debug)
+          echo "$RELEASE_OUTPUT"
+
+          RELEASE_NOTES=$(echo "$RELEASE_OUTPUT" | sed -n '/The release notes are:/,/^\b[semantic-release]\b/p' | sed '1d;$d' | sed '/^$/d')
+
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment on Pull Request
+        if: steps.release_notes.outputs.release_notes != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} 
+            --body "## Release Notes Preview\n\n${{ steps.release_notes.outputs.release_notes }}"
+
   release:
     needs: build
     runs-on: ubuntu-latest

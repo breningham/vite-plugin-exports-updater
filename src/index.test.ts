@@ -103,11 +103,11 @@ describe('buildExportsMap', () => {
     const entryNames = ['index'];
     vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      return p === '/path/to/dist/index.js' || p.toString().endsWith('dist');
+      return p === '/path/to/dist/index.js';
     });
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.css'] as any);
 
-    const exportsMap = buildExportsMap(entryNames, distPath, pkg, { css: true });
+    const exportsMap = buildExportsMap(entryNames, distPath, pkg, {});
 
     expect(exportsMap).toEqual({
       '.': {
@@ -121,7 +121,7 @@ describe('buildExportsMap', () => {
     const entryNames = ['index'];
     vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      return p === '/path/to/dist/index.js' || p.toString().endsWith('dist');
+      return p === '/path/to/dist/index.js';
     });
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.css'] as any);
 
@@ -138,7 +138,7 @@ describe('buildExportsMap', () => {
     const entryNames = ['index'];
     vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      return p === '/path/to/dist/index.js' || p.toString().endsWith('dist');
+      return p === '/path/to/dist/index.js';
     });
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.css'] as any);
 
@@ -157,7 +157,7 @@ describe('buildExportsMap', () => {
     const entryNames = ['index'];
     vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      return p === '/path/to/dist/index.js' || p.toString().endsWith('dist');
+      return p === '/path/to/dist/index.js';
     });
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.scss'] as any);
 
@@ -177,7 +177,7 @@ describe('buildExportsMap', () => {
     const entryNames = ['index'];
     vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      return p === '/path/to/dist/index.js' || p.toString().endsWith('dist');
+      return p === '/path/to/dist/index.js';
     });
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.css'] as any);
 
@@ -195,7 +195,7 @@ describe('buildExportsMap', () => {
     const entryNames = ['index'];
     vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      return p === '/path/to/dist/index.js' || p.toString().endsWith('dist');
+      return p === '/path/to/dist/index.js';
     });
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['style.scss'] as any);
     vi.spyOn(fs, 'statSync').mockReturnValue({ isDirectory: () => false } as any);
@@ -216,11 +216,7 @@ describe('buildExportsMap', () => {
     const entryNames = ['index'];
     vi.spyOn(path, 'basename').mockReturnValue('my-pkg');
     vi.spyOn(fs, 'existsSync').mockImplementation((p) => {
-      const pathStr = p.toString();
-      if (pathStr.endsWith('index.js')) return true;
-      if (pathStr.endsWith('dist')) return true;
-      if (pathStr.endsWith('styles')) return true;
-      return false;
+      return p === '/path/to/dist/index.js';
     });
     // Mock readdirSync to return a directory and a file
     vi.spyOn(fs, 'readdirSync').mockImplementation((p) => {

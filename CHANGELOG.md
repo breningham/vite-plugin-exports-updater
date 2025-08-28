@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.1.0...v2.1.1) (2025-08-28)
+
+
+### Bug Fixes
+
+* **plugin:** generate relative paths for style exports ([#20](https://github.com/breningham/vite-plugin-exports-updater/issues/20)) ([b267c66](https://github.com/breningham/vite-plugin-exports-updater/commit/b267c667cd8981d2f17b37ec144934fabfc8e9a4))
+
 # [2.1.0](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.3...v2.1.0) (2025-08-28)
 
 

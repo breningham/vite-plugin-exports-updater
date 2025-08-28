@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.2...v2.0.3) (2025-08-28)
+
+
+### Reverts
+
+* Revert "feat/component based exports ([#15](https://github.com/breningham/vite-plugin-exports-updater/issues/15))" ([#18](https://github.com/breningham/vite-plugin-exports-updater/issues/18)) ([85ca130](https://github.com/breningham/vite-plugin-exports-updater/commit/85ca1303cf5be2a4cce201c787b0703448ffae0b))
+
 ## [2.0.2](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.1...v2.0.2) (2025-08-21)
 
 

@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.3...v2.1.0) (2025-08-28)
+
+
+### Features
+
+* component based exports ([#19](https://github.com/breningham/vite-plugin-exports-updater/issues/19)) ([dc0f0c0](https://github.com/breningham/vite-plugin-exports-updater/commit/dc0f0c090fd2f21e7821ba18e1703ca62424d14e))
+
 ## [2.0.3](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.0.2...v2.0.3) (2025-08-28)
 
 

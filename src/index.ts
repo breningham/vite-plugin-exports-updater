@@ -1,9 +1,6 @@
-import { type Plugin, type UserConfig, loadConfigFromFile } from "vite";
+import { type Plugin, loadConfigFromFile } from "vite";
 import fs from "node:fs";
 import path from "node:path";
-import { globSync } from "glob";
-
-// --- Types ---
 
 interface PackageJson {
   name: string;
@@ -13,34 +10,16 @@ interface PackageJson {
   exports?: Record<string, ExportCondition>;
 }
 
-type ExportCondition = 
+type ExportCondition =
   | string
   | {
       import?: string;
       require?: string;
       types?: string;
-      style?: string;
-      sass?: string;
-    };
+    }
+  | { sass: string };
 
-interface ComponentPluginOptions {
-  handleTypes?: boolean;
-  css?: false;
-}
-
-interface FallbackPluginOptions {
-    entryPointExtensions?: string[];
-    css?: 
-        | boolean
-        | {
-            alias?: string | false;
-            extensions?: string[];
-        };
-}
-
-type PluginOptions = ComponentPluginOptions & FallbackPluginOptions;
-
-// --- Helper Functions ---
+// --- Helper Functions (from your original script) ---
 
 export async function findPackageDir(): Promise<string> {
   let dir = process.cwd();
@@ -55,114 +34,57 @@ export async function findPackageDir(): Promise<string> {
   throw new Error("Could not find package.json");
 }
 
-export async function tryLoadViteConfig(
-  pkgDir: string
-): Promise<UserConfig | null> {
+export async function tryLoadViteConfig(pkgDir: string) {
   try {
     const loaded = await loadConfigFromFile(
       { command: "build", mode: "production" },
       undefined,
       pkgDir
     );
-    return loaded?.config ?? null;
+    return loaded?.config;
   } catch (err: unknown) {
+    // Vite will log its own error, so we can just warn here.
     console.warn(
-      `[exports-updater] Failed to load vite config: ${ 
-        err instanceof Error ? err.message : String(err) 
+      `[exports-updater] Failed to load vite config: ${
+        err instanceof Error ? err.message : String(err)
       }`
     );
     return null;
   }
 }
 
-// --- New Component-Based Export Builder ---
-
-export function buildComponentExportsFromViteConfig(
-  pkgDir: string,
-  entry: Record<string, string>,
-  options: ComponentPluginOptions
-): Record<string, ExportCondition> {
-  const exportsMap: Record<string, ExportCondition> = {};
-
-  for (const [name, entryPath] of Object.entries(entry)) {
-    const componentDir = path.dirname(entryPath);
-    const conditions: ExportCondition = {};
-
-    // Standard import/require from build output
-    conditions.import = `./dist/${name}.js`;
-    if (fs.existsSync(path.join(pkgDir, "dist", `${name}.cjs`))) {
-      conditions.require = `./dist/${name}.cjs`;
-    }
-
-    // Types (Opt-in)
-    if (options.handleTypes) {
-      const typesPath = path.join(pkgDir, "dist", "types", `${name}.d.ts`);
-      if (fs.existsSync(typesPath)) {
-        conditions.types = `./dist/types/${name}.d.ts`;
-      }
-    }
-
-    // Smart style detection
-    if (options.css !== false) {
-      const styleFiles = globSync("*.{scss,css}", { 
-        cwd: componentDir, 
-        ignore: ["*.module.css", "*.module.scss"]
-      });
-      for (const file of styleFiles) {
-        const ext = path.extname(file);
-        if (ext === ".scss") {
-          conditions.sass = path.join(componentDir, file).replace(/\\/g, "/");
-        } else if (ext === ".css") {
-          conditions.style = path.join(componentDir, file).replace(/\\/g, "/");
-        }
-      }
-    }
-
-    if (Object.keys(conditions).length > 0) {
-      const key = name === "index" ? "." : `./${name}`;
-      exportsMap[key] = conditions;
-    }
-
-    // Add separate top-level export for CSS files (only if a style condition was added)
-    if (typeof conditions.style === 'string') {
-      exportsMap[`./${name}.css`] = conditions.style;
-    }
-  }
-
-  return exportsMap;
-}
-
-// --- Original Export Builder ---
-
 export function collectEntriesFromDist(
   distPath: string,
-  options: FallbackPluginOptions
+  options: PluginOptions
 ): string[] {
   if (!fs.existsSync(distPath)) return [];
   const entryPointExtensions = options.entryPointExtensions || [
     ".js",
     ".cjs",
     ".mjs",
+    ".d.ts",
   ];
   const regex = new RegExp(
-    `\.(${entryPointExtensions.map((ext) => ext.slice(1)).join("|")})`
+    `\\.(${entryPointExtensions.map((ext) => ext.slice(1)).join("|")})`
   );
   const files = fs.readdirSync(distPath).filter((f) => regex.test(f));
-  return [...new Set(files.map((f) => f.replace(regex, "")))];
+  const entryNames = [...new Set(files.map((f) => f.replace(regex, "")))];
+  return entryNames;
 }
 
 export function buildExportsMap(
   entryNames: string[],
   distPath: string,
   pkg: PackageJson,
-  options: FallbackPluginOptions
-): Record<string, ExportCondition> {
-  const exportsMap: Record<string, ExportCondition> = {};
+  options: PluginOptions
+): Record<string, ExportCondition | string> {
+  const exportsMap: Record<string, ExportCondition | string> = {};
 
   // 1. Handle JS/TS entries
   for (const name of entryNames) {
     const key = name === "index" ? "." : `./${name}`;
-    const conditions: ExportCondition = {};
+    const conditions: Record<string, string> = {};
+
     let jsFileName = `${name}.js`;
     let cjsFileName = `${name}.cjs`;
 
@@ -185,13 +107,12 @@ export function buildExportsMap(
     }
   }
 
-  // 2. Handle CSS entries from dist
+  // 2. Handle CSS entries
   if (options.css !== false) {
-    const cssConfig = typeof options.css === "object" ? options.css : {};
-    const cssExtensions = cssConfig.extensions || [".css", ".scss"];
+    const cssExtensions = options.css?.extensions || [".css"];
+    const pkgNameCss = `${path.basename(pkg.name)}.css`;
 
     const findCssFiles = (dir: string): string[] => {
-      if (!fs.existsSync(dir)) return [];
       const files = fs.readdirSync(dir);
       let cssFiles: string[] = [];
       for (const file of files) {
@@ -208,21 +129,27 @@ export function buildExportsMap(
 
     const cssFiles = findCssFiles(distPath);
 
-    if (cssConfig.alias !== false) {
-      const alias = cssConfig.alias || "./style.css";
-      const pkgNameCss = `${path.basename(pkg.name)}.css`;
+    // Only generate alias if options.css.alias is not explicitly false
+    if (options.css?.alias !== false) {
+      const alias = options.css?.alias || "./style.css"; // Use provided alias or default
+
       if (cssFiles.includes("style.css")) {
         exportsMap[alias] = "./dist/style.css";
       } else if (cssFiles.includes(pkgNameCss)) {
         exportsMap[alias] = `./dist/${pkgNameCss}`;
+      } else if (cssFiles.includes("index.css")) {
+        exportsMap[alias] = "./dist/index.css";
       }
     }
 
+    // Always add individual CSS files
     for (const file of cssFiles) {
       const key = `./${file.replace(/\\/g, "/")}`;
       const value = `./dist/${file.replace(/\\/g, "/")}`;
       if (file.endsWith(".scss")) {
-        exportsMap[key] = { sass: value };
+        exportsMap[key] = {
+          sass: value,
+        };
       } else {
         exportsMap[key] = value;
       }
@@ -232,12 +159,23 @@ export function buildExportsMap(
   return exportsMap;
 }
 
+interface PluginOptions {
+  entryPointExtensions?: string[];
+  css?:
+    | false
+    | {
+        alias?: string | false;
+        extensions?: string[];
+      };
+}
+
 // --- The Vite Plugin ---
 
 export default function updateExports(options: PluginOptions = {}): Plugin {
   return {
     name: "vite-plugin-exports-updater",
 
+    // Use the `closeBundle` hook, which runs only once after all builds are complete.
     async closeBundle() {
       console.log(
         "[exports-updater] Running post-build to update package.json..."
@@ -246,80 +184,65 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
       try {
         const pkgDir = await findPackageDir();
         const pkgPath = path.join(pkgDir, "package.json");
-        if (!fs.existsSync(pkgPath)) {
-          console.warn("[exports-updater] Missing package.json. Aborting.");
+        const distPath = path.join(pkgDir, "dist");
+
+        if (!fs.existsSync(pkgPath) || !fs.existsSync(distPath)) {
+          console.warn(
+            "[exports-updater] Missing package.json or dist/ directory. Aborting."
+          );
           return;
         }
 
         const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
         const viteConfig = await tryLoadViteConfig(pkgDir);
 
-        if (!viteConfig?.build?.lib) {
-          throw new Error("Unable to find entry points.");
-        }
+        let entryNames: string[] = [];
 
-        const entry = viteConfig?.build?.lib?.entry;
+        if (viteConfig?.build?.lib) {
+          const entryOption = viteConfig?.build?.lib?.entry;
 
-        let exportsMap: Record<string, ExportCondition> = {};
-
-        if (typeof entry === "object" && !Array.isArray(entry)) {
-          console.log(
-            "[exports-updater] Vite config has named entries, generating component-style exports."
-          );
-          exportsMap = buildComponentExportsFromViteConfig(pkgDir, entry, options);
-        } else {
-          console.log(
-            "[exports-updater] No named entries in Vite config, falling back to default export generation."
-          );
-          const distPath = path.join(pkgDir, "dist");
-          if (!fs.existsSync(distPath)) {
-            console.warn(
-              "[exports-updater] Missing dist/ directory for fallback mode. Aborting."
-            );
-            return;
-          }
-
-          let entryNames: string[] = [];
-          if (entry) {
-            if (typeof entry === "string") {
-              entryNames.push(path.basename(entry, path.extname(entry)));
-            } else if (Array.isArray(entry)) {
+          if (entryOption) {
+            if (typeof entryOption === "string") {
               entryNames.push(
-                ...entry.map((e) => path.basename(e, path.extname(e)))
+                path.basename(entryOption, path.extname(entryOption))
               );
+            } else if (Array.isArray(entryOption)) {
+              entryNames.push(
+                ...entryOption.map((e) => path.basename(e, path.extname(e)))
+              );
+            } else if (typeof entryOption === "object") {
+              entryNames.push(...Object.keys(entryOption));
             }
-          } else {
-            entryNames = collectEntriesFromDist(distPath, options);
-          }
-
-          if (entryNames.length > 0) {
-            exportsMap = buildExportsMap(entryNames, distPath, pkg, options);
           }
         }
 
-        if (Object.keys(exportsMap).length === 0) {
-          console.warn("[exports-updater] No entry points found. Nothing to do.");
+        if (entryNames.length === 0) {
+          console.log(
+            "[exports-updater] No lib.entry found in Vite config, falling back to scanning dist/ directory."
+          );
+          entryNames = collectEntriesFromDist(distPath, options);
+        }
+
+        if (entryNames.length === 0) {
+          console.error("[exports-updater] No entry points found. Aborting.");
           return;
         }
 
-        pkg.exports = { ...pkg.exports, ...exportsMap };
+        pkg.exports = buildExportsMap(entryNames, distPath, pkg, options);
 
-        if (pkg.exports["."] ) {
+        if (pkg.exports["."]) {
           const mainExport = pkg.exports["."];
           if (typeof mainExport !== "string") {
-            pkg.main = mainExport.require ?? pkg.main;
-            pkg.module = mainExport.import ?? pkg.module;
-            if (mainExport.types) {
-                pkg.types = mainExport.types;
-            }
+            pkg.main = mainExport.require || pkg.main;
+            pkg.module = mainExport.import || pkg.module;
+            pkg.types = mainExport.types || pkg.types;
           }
         }
 
-        for (const field of ["main", "module", "types"]) {
-          if (!pkg[field as keyof PackageJson]) {
-            delete pkg[field as keyof PackageJson];
-          }
-        }
+        // Ensure legacy fields are removed if they are null/undefined from the exports map
+        if (!pkg.main) delete pkg.main;
+        if (!pkg.module) delete pkg.module;
+        if (!pkg.types) delete pkg.types;
 
         fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
         console.log(
@@ -327,8 +250,8 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
         );
       } catch (error: unknown) {
         console.error(
-          `[exports-updater] An error occurred: ${ 
-            error instanceof Error ? error.message : String(error) 
+          `[exports-updater] An error occurred: ${
+            error instanceof Error ? error.message : String(error)
           }`
         );
       }

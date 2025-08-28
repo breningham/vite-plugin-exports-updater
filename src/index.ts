@@ -110,10 +110,11 @@ export function buildComponentExportsFromViteConfig(
       });
       for (const file of styleFiles) {
         const ext = path.extname(file);
+        const relativePath = `./${path.relative(pkgDir, path.join(componentDir, file)).replace(/\\/g, "/")}`;
         if (ext === ".scss") {
-          conditions.sass = path.join(componentDir, file).replace(/\\/g, "/");
+          conditions.sass = relativePath;
         } else if (ext === ".css") {
-          conditions.style = path.join(componentDir, file).replace(/\\/g, "/");
+          conditions.style = relativePath;
         }
       }
     }

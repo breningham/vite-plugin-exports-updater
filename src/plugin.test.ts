@@ -89,9 +89,10 @@ describe("vite-plugin-exports-updater with component exports", () => {
         build: {
           lib: {
             entry: {
-              button: "lib/button/index.ts",
-              card: "lib/card/index.ts",
-              "css-module-component": "lib/css-module-component/index.ts",
+              button: "/path/to/project/lib/button/index.ts",
+              card: "/path/to/project/lib/card/index.ts",
+              "css-module-component":
+                "/path/to/project/lib/css-module-component/index.ts",
             },
           },
         },
@@ -137,10 +138,12 @@ describe("vite-plugin-exports-updater with component exports", () => {
       }
 
       // Filter out ignored files
-      return files.filter(file => {
-        return !ignorePatterns.some(ignorePattern => {
+      return files.filter((file) => {
+        return !ignorePatterns.some((ignorePattern) => {
           // Basic glob matching for testing purposes
-          const regex = new RegExp(ignorePattern.replace(/\./g, "\\.").replace(/\*/g, ".*"));
+          const regex = new RegExp(
+            ignorePattern.replace(/\./g, "\\.").replace(/\*/g, ".*")
+          );
           return regex.test(file);
         });
       });
@@ -165,14 +168,14 @@ describe("vite-plugin-exports-updater with component exports", () => {
               import: "./dist/button.js",
               require: "./dist/button.cjs",
               types: "./dist/types/button.d.ts",
-              sass: "lib/button/_button.scss",
+              sass: "./lib/button/_button.scss",
             },
             "./card": {
               import: "./dist/card.js",
               require: "./dist/card.cjs",
-              style: "lib/card/card.css",
+              style: "./lib/card/card.css",
             },
-            "./card.css": "lib/card/card.css", // New direct CSS export
+            "./card.css": "./lib/card/card.css", // New direct CSS export
             "./css-module-component": {
               import: "./dist/css-module-component.js",
               require: "./dist/css-module-component.cjs",

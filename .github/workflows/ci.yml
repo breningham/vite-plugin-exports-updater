@@ -54,7 +54,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          node -e 'import { readFileSync, writeFileSync } from "fs"; const path = ".releaserc.json"; const config = JSON.parse(readFileSync(path)); delete config.branches; writeFileSync(path, JSON.stringify(config, null, 2));'
           RELEASE_OUTPUT=$(npx semantic-release --dry-run --ci false --debug)
+          git checkout -- .releaserc.json
           echo "$RELEASE_OUTPUT"
 
           RELEASE_NOTES=$(echo "$RELEASE_OUTPUT" | sed -n '/The release notes are:/,/^\b[semantic-release]\b/p' | sed '1d;$d' | sed '/^$/d')

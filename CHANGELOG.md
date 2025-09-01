@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.1.1...v2.2.0) (2025-09-01)
+
+
+### Features
+
+* **plugin:** add `development` exports ([#22](https://github.com/breningham/vite-plugin-exports-updater/issues/22)) ([adece16](https://github.com/breningham/vite-plugin-exports-updater/commit/adece163ca2739f7bc59c8a7d612b34b6ee632b1))
+
 ## [2.1.1](https://github.com/breningham/vite-plugin-exports-updater/compare/v2.1.0...v2.1.1) (2025-08-28)
 
 

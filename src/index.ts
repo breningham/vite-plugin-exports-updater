@@ -13,7 +13,7 @@ interface PackageJson {
   exports?: Record<string, ExportCondition>;
 }
 
-type ExportCondition = 
+type ExportCondition =
   | string
   | {
       import?: string;
@@ -21,21 +21,23 @@ type ExportCondition =
       types?: string;
       style?: string;
       sass?: string;
+      development?: string;
     };
 
 interface ComponentPluginOptions {
   handleTypes?: boolean;
+  enabledDevelopment?: boolean;
   css?: false;
 }
 
 interface FallbackPluginOptions {
-    entryPointExtensions?: string[];
-    css?: 
-        | boolean
-        | {
-            alias?: string | false;
-            extensions?: string[];
-        };
+  entryPointExtensions?: string[];
+  css?:
+    | boolean
+    | {
+        alias?: string | false;
+        extensions?: string[];
+      };
 }
 
 type PluginOptions = ComponentPluginOptions & FallbackPluginOptions;
@@ -67,8 +69,8 @@ export async function tryLoadViteConfig(
     return loaded?.config ?? null;
   } catch (err: unknown) {
     console.warn(
-      `[exports-updater] Failed to load vite config: ${ 
-        err instanceof Error ? err.message : String(err) 
+      `[exports-updater] Failed to load vite config: ${
+        err instanceof Error ? err.message : String(err)
       }`
     );
     return null;
@@ -102,15 +104,24 @@ export function buildComponentExportsFromViteConfig(
       }
     }
 
+    if (options.enabledDevelopment) {
+      conditions.development = path.relative(
+        pkgDir,
+        path.join(entryPath, name)
+      );
+    }
+
     // Smart style detection
     if (options.css !== false) {
-      const styleFiles = globSync("*.{scss,css}", { 
-        cwd: componentDir, 
-        ignore: ["*.module.css", "*.module.scss"]
+      const styleFiles = globSync("*.{scss,css}", {
+        cwd: componentDir,
+        ignore: ["*.module.css", "*.module.scss"],
       });
       for (const file of styleFiles) {
         const ext = path.extname(file);
-        const relativePath = `./${path.relative(pkgDir, path.join(componentDir, file)).replace(/\\/g, "/")}`;
+        const relativePath = `./${path
+          .relative(pkgDir, path.join(componentDir, file))
+          .replace(/\\/g, "/")}`;
         if (ext === ".scss") {
           conditions.sass = relativePath;
         } else if (ext === ".css") {
@@ -125,7 +136,7 @@ export function buildComponentExportsFromViteConfig(
     }
 
     // Add separate top-level export for CSS files (only if a style condition was added)
-    if (typeof conditions.style === 'string') {
+    if (typeof conditions.style === "string") {
       exportsMap[`./${name}.css`] = conditions.style;
     }
   }
@@ -235,7 +246,9 @@ export function buildExportsMap(
 
 // --- The Vite Plugin ---
 
-export default function updateExports(options: PluginOptions = {}): Plugin {
+export default function updateExports(
+  options: PluginOptions = { enabledDevelopment: true }
+): Plugin {
   return {
     name: "vite-plugin-exports-updater",
 
@@ -267,7 +280,11 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
           console.log(
             "[exports-updater] Vite config has named entries, generating component-style exports."
           );
-          exportsMap = buildComponentExportsFromViteConfig(pkgDir, entry, options);
+          exportsMap = buildComponentExportsFromViteConfig(
+            pkgDir,
+            entry,
+            options
+          );
         } else {
           console.log(
             "[exports-updater] No named entries in Vite config, falling back to default export generation."
@@ -299,19 +316,21 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
         }
 
         if (Object.keys(exportsMap).length === 0) {
-          console.warn("[exports-updater] No entry points found. Nothing to do.");
+          console.warn(
+            "[exports-updater] No entry points found. Nothing to do."
+          );
           return;
         }
 
         pkg.exports = { ...pkg.exports, ...exportsMap };
 
-        if (pkg.exports["."] ) {
+        if (pkg.exports["."]) {
           const mainExport = pkg.exports["."];
           if (typeof mainExport !== "string") {
             pkg.main = mainExport.require ?? pkg.main;
             pkg.module = mainExport.import ?? pkg.module;
             if (mainExport.types) {
-                pkg.types = mainExport.types;
+              pkg.types = mainExport.types;
             }
           }
         }
@@ -328,8 +347,8 @@ export default function updateExports(options: PluginOptions = {}): Plugin {
         );
       } catch (error: unknown) {
         console.error(
-          `[exports-updater] An error occurred: ${ 
-            error instanceof Error ? error.message : String(error) 
+          `[exports-updater] An error occurred: ${
+            error instanceof Error ? error.message : String(error)
           }`
         );
       }

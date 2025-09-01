@@ -151,7 +151,10 @@ describe("vite-plugin-exports-updater with component exports", () => {
   });
 
   it("should generate exports with types and sass/style conditions, and direct CSS export", async () => {
-    const plugin = updateExports({ handleTypes: true });
+    const plugin = updateExports({
+      handleTypes: true,
+      enabledDevelopment: false,
+    });
     const closeBundle = plugin.closeBundle;
 
     if (typeof closeBundle === "function") {
@@ -179,6 +182,50 @@ describe("vite-plugin-exports-updater with component exports", () => {
             "./css-module-component": {
               import: "./dist/css-module-component.js",
               require: "./dist/css-module-component.cjs",
+            },
+          },
+        },
+        null,
+        2
+      ) + "\n"
+    );
+  });
+
+  it("should generate exports with development conditions", async () => {
+    const plugin = updateExports({
+      handleTypes: true,
+      enabledDevelopment: true,
+    });
+    const closeBundle = plugin.closeBundle;
+
+    if (typeof closeBundle === "function") {
+      await closeBundle.call(undefined);
+    }
+
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      "/path/to/project/package.json",
+      JSON.stringify(
+        {
+          name: "my-component-lib",
+          exports: {
+            "./button": {
+              import: "./dist/button.js",
+              require: "./dist/button.cjs",
+              types: "./dist/types/button.d.ts",
+              development: "./lib/button/index.ts",
+              sass: "./lib/button/_button.scss",
+            },
+            "./card": {
+              import: "./dist/card.js",
+              require: "./dist/card.cjs",
+              development: "./lib/card/index.ts",
+              style: "./lib/card/card.css",
+            },
+            "./card.css": "./lib/card/card.css", // New direct CSS export
+            "./css-module-component": {
+              import: "./dist/css-module-component.js",
+              require: "./dist/css-module-component.cjs",
+              development: "./lib/css-module-component/index.ts",
             },
           },
         },

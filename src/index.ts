@@ -105,10 +105,7 @@ export function buildComponentExportsFromViteConfig(
     }
 
     if (options.enabledDevelopment) {
-      conditions.development = path.relative(
-        pkgDir,
-        path.join(entryPath, name)
-      );
+      conditions.development = `./${path.relative(pkgDir, entryPath)}`;
     }
 
     // Smart style detection
